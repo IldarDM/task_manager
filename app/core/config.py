@@ -1,7 +1,7 @@
+import os
 from typing import Optional
 
 from pydantic_settings import BaseSettings
-
 
 class Settings(BaseSettings):
     POSTGRES_USER: str = "devuser"
@@ -47,7 +47,7 @@ class Settings(BaseSettings):
         )
 
     class Config:
-        env_file = ".env"
+        env_file = os.getenv("ENV_FILE", ".env")
         env_file_encoding = "utf-8"
 
 settings = Settings()

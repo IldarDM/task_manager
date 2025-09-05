@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  db_test:
+    image: postgres:15
+    container_name: task_manager_db_test
+    env_file:
+      - .env.test
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data_test:/var/lib/postgresql/data:tmpfs
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U task_manager_test_user -d task_manager_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis_test:
+    image: redis:7-alpine
+    container_name: task_manager_redis
+    env_file:
+      - .env.test
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis_data_test:/data
+    command: redis-server --appendonly no
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  backend_test:
+    build: .
+    container_name: task_manager_backend_test
+    env_file:
+      - .env.test
+    depends_on:
+      db_test:
+        condition: service_healthy
+      redis_test:
+        condition: service_healthy
+    command: pytest --disable-warnings -q
+    ports:
+      - "8001:8000"
+
+volumes:
+  postgres_data_test:
+  redis_data_test:

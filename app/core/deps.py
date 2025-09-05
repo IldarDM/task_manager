@@ -4,6 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.core.security import verify_token
 from app.db.session import get_db
+from app.core.redis_client import RedisClient
 from app.db.models.user import User
 
 # Security scheme
@@ -45,3 +46,6 @@ def get_current_active_user(
 ) -> User:
     """Get current active user (alias for clarity)."""
     return current_user
+
+def get_redis() -> RedisClient:
+    return RedisClient()
