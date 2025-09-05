@@ -12,6 +12,8 @@ from app.core.exception_handlers import (
     general_exception_handler
 )
 from app.api.v1.auth import router as auth_router
+from app.api.v1.categories import router as categories_router
+from app.api.v1.tasks import router as tasks_router
 
 # Create FastAPI app
 app = FastAPI(
@@ -39,6 +41,8 @@ app.add_exception_handler(Exception, general_exception_handler)
 
 # Include routers
 app.include_router(auth_router, prefix="/api/v1")
+app.include_router(categories_router, prefix="/api/v1")
+app.include_router(tasks_router, prefix="/api/v1")
 
 # Health check endpoint
 @app.get("/api/v1/health", tags=["Health"])
