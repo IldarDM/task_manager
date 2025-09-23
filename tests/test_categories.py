@@ -1,7 +1,17 @@
 import pytest
 from fastapi import status
+from typing import Dict
 from app.db.models.category import Category
 from tests.conftest import assert_error_response
+
+
+# -----------------------
+# Helpers
+# -----------------------
+def assert_category_in_db(db_session, name: str) -> Category:
+    category = db_session.query(Category).filter_by(name=name).first()
+    assert category is not None
+    return category
 
 
 # -----------------------
@@ -17,7 +27,7 @@ def test_list_categories(client, auth_headers, test_category):
 
 
 def test_create_category(client, auth_headers, db_session):
-    payload = {
+    payload: Dict[str, str] = {
         "name": "Work",
         "description": "Work-related tasks",
         "color": "#00FF00"
@@ -30,8 +40,7 @@ def test_create_category(client, auth_headers, db_session):
     assert data["name"] == payload["name"]
     assert data["color"] == payload["color"]
 
-    category_in_db = db_session.query(Category).filter_by(name="Work").first()
-    assert category_in_db is not None
+    assert_category_in_db(db_session, payload["name"])
 
 
 def test_get_category(client, auth_headers, test_category):
@@ -53,13 +62,12 @@ def test_get_category_not_found(client, auth_headers):
 
 
 def test_update_category(client, auth_headers, test_category):
-    payload = {"name": "Updated Category", "description": "Updated description"}
+    payload: Dict[str, str] = {
+        "name": "Updated Category",
+        "description": "Updated description"
+    }
 
-    response = client.put(
-        f"/api/v1/categories/{test_category.id}",
-        json=payload,
-        headers=auth_headers
-    )
+    response = client.put(f"/api/v1/categories/{test_category.id}", json=payload, headers=auth_headers)
     assert response.status_code == status.HTTP_200_OK
 
     data = response.json()
@@ -87,52 +95,30 @@ def test_get_category_tasks(client, auth_headers, test_category, test_task):
     assert isinstance(data, list)
     assert any(t["id"] == test_task.id for t in data)
 
+
 # -----------------------
 # Validation Tests (422)
 # -----------------------
-def test_create_category_missing_name(client, auth_headers):
-    payload = {
-        # "name" пропущено
-        "description": "Description only",
-        "color": "#FF0000"
-    }
+@pytest.mark.parametrize(
+    "payload, expected_type",
+    [
+        ({"description": "Description only", "color": "#FF0000"}, "validation_error"),  # missing name
+        ({"name": "InvalidColor", "description": "Description", "color": "not-a-color"}, "validation_error"),
+        ({"name": "", "description": "Updated description"}, "validation_error"),
+    ]
+)
+def test_category_validation(client, auth_headers, test_category, payload, expected_type):
+    # Determine endpoint and method
+    category_id = getattr(test_category, "id", 1)
+    if "name" in payload and payload["name"] == "":
+        # Update empty name
+        response = client.put(f"/api/v1/categories/{category_id}", json=payload, headers=auth_headers)
+    else:
+        response = client.post("/api/v1/categories/", json=payload, headers=auth_headers)
 
-    response = client.post("/api/v1/categories/", json=payload, headers=auth_headers)
     assert_error_response(
         response,
         expected_status=status.HTTP_422_UNPROCESSABLE_ENTITY,
         expected_message="Validation error",
-        expected_type="validation_error"
+        expected_type=expected_type
     )
-
-
-def test_create_category_invalid_color(client, auth_headers):
-    payload = {
-        "name": "InvalidColor",
-        "description": "Description",
-        "color": "not-a-color"  # Некорректный формат
-    }
-
-    response = client.post("/api/v1/categories/", json=payload, headers=auth_headers)
-    assert_error_response(
-        response,
-        expected_status=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        expected_message="Validation error",
-        expected_type="validation_error"
-    )
-
-
-def test_update_category_empty_name(client, auth_headers, test_category):
-    payload = {
-        "name": "",  # Пустое имя
-        "description": "Updated description"
-    }
-
-    response = client.put(f"/api/v1/categories/{test_category.id}", json=payload, headers=auth_headers)
-    assert_error_response(
-        response,
-        expected_status=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        expected_message="Validation error",
-        expected_type="validation_error"
-    )
-

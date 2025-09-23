@@ -1,14 +1,23 @@
-
 from fastapi import status
+from typing import Dict
 from app.db.models.user import User
 from tests.conftest import assert_error_response
+
+
+# -----------------------
+# Helpers
+# -----------------------
+def assert_user_in_db(db_session, email: str):
+    user = db_session.query(User).filter_by(email=email).first()
+    assert user is not None
+    return user
 
 
 # -----------------------
 # Registration Tests
 # -----------------------
 def test_register_user(client, db_session):
-    payload = {
+    payload: Dict[str, str] = {
         "email": "newuser@example.com",
         "password": "StrongPass123!",
         "first_name": "John",
@@ -22,9 +31,8 @@ def test_register_user(client, db_session):
     assert data["email"] == payload["email"]
     assert "id" in data
 
-    # Проверяем, что пользователь создан в базе
-    user_in_db = db_session.query(User).filter_by(email=payload["email"]).first()
-    assert user_in_db is not None
+    # Проверка, что пользователь создан в БД
+    assert_user_in_db(db_session, payload["email"])
 
 
 def test_register_user_conflict(client, test_user):
@@ -47,26 +55,19 @@ def test_register_user_conflict(client, test_user):
 # Login Tests
 # -----------------------
 def test_login_user(client, test_user):
-    payload = {
-        "email": test_user.email,
-        "password": "TestPassword123!"
-    }
-
+    payload = {"email": test_user.email, "password": "TestPassword123!"}
     response = client.post("/api/v1/auth/login", json=payload)
-    assert response.status_code == status.HTTP_200_OK
 
+    assert response.status_code == status.HTTP_200_OK
     data = response.json()
     assert "access_token" in data
     assert data["token_type"] == "bearer"
 
 
 def test_login_user_wrong_password(client, test_user):
-    payload = {
-        "email": test_user.email,
-        "password": "WrongPassword!"
-    }
-
+    payload = {"email": test_user.email, "password": "WrongPassword!"}
     response = client.post("/api/v1/auth/login", json=payload)
+
     assert_error_response(
         response,
         expected_status=status.HTTP_401_UNAUTHORIZED,
@@ -88,11 +89,7 @@ def test_get_current_user(client, auth_headers, test_user):
 
 
 def test_update_current_user(client, auth_headers, test_user):
-    payload = {
-        "first_name": "UpdatedName",
-        "last_name": "UpdatedLast"
-    }
-
+    payload = {"first_name": "UpdatedName", "last_name": "UpdatedLast"}
     response = client.put("/api/v1/auth/me", json=payload, headers=auth_headers)
     assert response.status_code == status.HTTP_200_OK
 
