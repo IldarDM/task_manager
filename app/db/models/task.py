@@ -2,7 +2,6 @@ from sqlalchemy import Column, String, Text, Integer, ForeignKey, DateTime, Enum
 from sqlalchemy.orm import relationship
 from .base import BaseModel
 from datetime import datetime
-from typing import Optional
 import enum
 
 
@@ -21,6 +20,7 @@ class TaskPriority(str, enum.Enum):
 
 
 class Task(BaseModel):
+    """Task model representing user tasks."""
     __tablename__ = "tasks"
 
     title = Column(String(200), nullable=False)
@@ -28,9 +28,9 @@ class Task(BaseModel):
     status = Column(Enum(TaskStatus), default=TaskStatus.TODO, nullable=False)
     priority = Column(Enum(TaskPriority), default=TaskPriority.MEDIUM, nullable=False)
     due_date = Column(DateTime, nullable=True)
-    deleted_at = Column(DateTime, nullable=True)  # For soft delete
+    deleted_at = Column(DateTime, nullable=True)  # Soft delete timestamp
 
-    # Foreign Keys
+    # Foreign keys
     owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     category_id = Column(Integer, ForeignKey("categories.id", ondelete="SET NULL"), nullable=True)
 
@@ -40,23 +40,26 @@ class Task(BaseModel):
 
     @property
     def is_deleted(self) -> bool:
-        """Check if task is soft deleted."""
+        """Return True if task is soft deleted."""
         return self.deleted_at is not None
 
     @property
     def is_overdue(self) -> bool:
-        """Check if task is overdue."""
+        """Return True if task is overdue."""
         if not self.due_date or self.status in [TaskStatus.DONE, TaskStatus.ARCHIVED]:
             return False
         return datetime.utcnow() > self.due_date
 
     def soft_delete(self) -> None:
-        """Soft delete the task."""
+        """Mark task as deleted (soft delete)."""
         self.deleted_at = datetime.utcnow()
 
     def restore(self) -> None:
-        """Restore soft deleted task."""
+        """Restore a soft-deleted task."""
         self.deleted_at = None
 
     def __repr__(self) -> str:
-        return f"<Task(id={self.id}, title='{self.title}', status='{self.status}', owner_id={self.owner_id})>"
+        return (
+            f"<Task(id={self.id}, title='{self.title}', status='{self.status}', "
+            f"owner_id={self.owner_id})>"
+        )

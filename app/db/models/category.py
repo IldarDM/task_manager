@@ -4,11 +4,12 @@ from .base import BaseModel
 
 
 class Category(BaseModel):
+    """Category model representing task categories."""
     __tablename__ = "categories"
 
     name = Column(String(100), nullable=False)
     description = Column(String(500), nullable=True)
-    color = Column(String(7), default="#6B7280", nullable=False)  # Hex color
+    color = Column(String(7), default="#6B7280", nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
     # Relationships
@@ -17,7 +18,7 @@ class Category(BaseModel):
 
     @property
     def task_count(self) -> int:
-        """Return count of non-deleted tasks in this category."""
+        """Return the count of non-deleted tasks in this category."""
         return len([task for task in self.tasks if task.deleted_at is None])
 
     def __repr__(self) -> str:

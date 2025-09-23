@@ -3,7 +3,9 @@ from typing import Optional
 
 from pydantic_settings import BaseSettings
 
+
 class Settings(BaseSettings):
+    # Database
     POSTGRES_USER: str = "devuser"
     POSTGRES_PASSWORD: str = "devpass"
     POSTGRES_DB: str = "task_manager"
@@ -15,7 +17,7 @@ class Settings(BaseSettings):
     algorithm: str
     access_token_expire_minutes: int = 30
 
-    # Rate Limiting
+    # Rate limiting
     rate_limit_per_minute: int = 100
     auth_rate_limit_per_minute: int = 10
 
@@ -40,6 +42,7 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
+        """Returns full Postgres connection URL."""
         return (
             f"postgresql://{self.POSTGRES_USER}:"
             f"{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:"
@@ -49,5 +52,6 @@ class Settings(BaseSettings):
     class Config:
         env_file = os.getenv("ENV_FILE", ".env")
         env_file_encoding = "utf-8"
+
 
 settings = Settings()

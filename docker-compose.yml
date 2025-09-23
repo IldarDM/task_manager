@@ -14,6 +14,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - task_manager_network
 
   redis:
     image: redis:7-alpine
@@ -29,6 +31,8 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
+    networks:
+      - task_manager_network
 
   backend:
     build: .
@@ -43,6 +47,13 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
+    networks:
+      - task_manager_network
+
+
+networks:
+  task_manager_network:
+    external: true
 
 volumes:
   postgres_data:

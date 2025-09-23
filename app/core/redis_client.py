@@ -1,19 +1,22 @@
-import redis
-import json
-from typing import Optional, Any
-from app.core.config import settings
 import logging
+from typing import Optional
+
+import redis
+
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 
 class RedisClient:
+    """Redis client wrapper with connection handling and safe operations."""
+
     def __init__(self):
         self.redis_client: Optional[redis.Redis] = None
         self._connect()
 
-    def _connect(self):
-        """Connect to Redis."""
+    def _connect(self) -> None:
+        """Connect to Redis and test connection."""
         try:
             self.redis_client = redis.from_url(
                 settings.redis_url,
@@ -21,9 +24,8 @@ class RedisClient:
                 socket_connect_timeout=5,
                 socket_timeout=5,
                 retry_on_timeout=True,
-                health_check_interval=30
+                health_check_interval=30,
             )
-            # Test connection
             self.redis_client.ping()
             logger.info("Connected to Redis successfully")
         except Exception as e:
@@ -91,5 +93,5 @@ class RedisClient:
             return False
 
 
-# Global Redis client instance
+# Singleton Redis client
 redis_client = RedisClient()

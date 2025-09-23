@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Request, status
+from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
@@ -15,15 +15,14 @@ from app.api.v1.auth import router as auth_router
 from app.api.v1.categories import router as categories_router
 from app.api.v1.tasks import router as tasks_router
 
-# Create FastAPI app
 app = FastAPI(
     title=settings.app_name,
     version=settings.version,
-    description="A RESTful API for personal task management with team collaboration features",
+    description="RESTful API for personal task management with team collaboration features",
     openapi_url="/api/v1/openapi.json" if settings.debug else None,
 )
 
-# CORS middleware
+# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.backend_cors_origins,
@@ -39,27 +38,27 @@ app.add_exception_handler(ValidationError, validation_exception_handler)
 app.add_exception_handler(SQLAlchemyError, sqlalchemy_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
 
-# Include routers
+# API routers
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(categories_router, prefix="/api/v1")
 app.include_router(tasks_router, prefix="/api/v1")
 
-# Health check endpoint
+
 @app.get("/api/v1/health", tags=["Health"])
 async def health_check():
-    """Health check endpoint."""
+    """Returns service health and version info."""
     return {
         "status": "healthy",
         "version": settings.version,
-        "app": settings.app_name
+        "app": settings.app_name,
     }
 
-# Root endpoint
+
 @app.get("/", tags=["Root"])
 async def root():
-    """Root endpoint."""
+    """Root endpoint showing basic info."""
     return {
         "message": f"Welcome to {settings.app_name}",
         "version": settings.version,
-        "docs_url": "/docs" if settings.debug else None
+        "docs_url": "/docs" if settings.debug else None,
     }
