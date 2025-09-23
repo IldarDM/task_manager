@@ -4,12 +4,11 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.101.0-green)](https://fastapi.tiangolo.com/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-7-red)](https://redis.io/)
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 **Task Manager** — это RESTful API для управления задачами.  
 Проект построен на **FastAPI**, использует **PostgreSQL** и **Redis**, полностью работает через **Docker**, с тестами и поддержкой **Swagger**-документации.  
 
-Проект является частью комплексной экосистемы для управления задачами, которая включает:  
+Проект является частью комплексной экосистемы для управления задачами, которая будет включать:  
 - **REST API** — основной бэкенд для управления пользователями, задачами и категориями.  
 - **Telegram-бот** — пользовательский интерфейс для взаимодействия с задачами через мессенджер.  
 - **MCP** - для взаимодействия LLM с сервисом. 
