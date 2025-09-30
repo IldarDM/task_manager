@@ -1,8 +1,6 @@
 import os
 from typing import Optional
-
 from pydantic_settings import BaseSettings
-
 
 class Settings(BaseSettings):
     # Database
@@ -16,6 +14,7 @@ class Settings(BaseSettings):
     secret_key: str
     algorithm: str
     access_token_expire_minutes: int = 30
+    refresh_token_expire_days: int = 7
 
     # Rate limiting
     rate_limit_per_minute: int = 100
@@ -42,7 +41,6 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
-        """Returns full Postgres connection URL."""
         return (
             f"postgresql://{self.POSTGRES_USER}:"
             f"{self.POSTGRES_PASSWORD}@{self.POSTGRES_HOST}:"
@@ -52,6 +50,5 @@ class Settings(BaseSettings):
     class Config:
         env_file = os.getenv("ENV_FILE", ".env")
         env_file_encoding = "utf-8"
-
 
 settings = Settings()

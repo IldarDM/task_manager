@@ -28,7 +28,7 @@ class Task(BaseModel):
     status = Column(Enum(TaskStatus), default=TaskStatus.TODO, nullable=False)
     priority = Column(Enum(TaskPriority), default=TaskPriority.MEDIUM, nullable=False)
     due_date = Column(DateTime, nullable=True)
-    deleted_at = Column(DateTime, nullable=True)  # Soft delete timestamp
+    deleted_at = Column(DateTime, nullable=True)
 
     # Foreign keys
     owner_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)

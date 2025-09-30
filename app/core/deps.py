@@ -4,7 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.core.security import verify_token
-from app.core.redis_client import RedisClient
+from app.core.redis_client import redis_client, RedisClient
 from app.db.session import get_db
 from app.db.models.user import User
 
@@ -15,7 +15,6 @@ def get_current_user(
     db: Session = Depends(get_db),
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> User:
-    """Return the current authenticated user."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -31,21 +30,15 @@ def get_current_user(
         raise credentials_exception
 
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user",
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
 
     return user
 
 
-def get_current_active_user(
-    current_user: User = Depends(get_current_user),
-) -> User:
-    """Alias for current active user."""
+def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     return current_user
 
 
 def get_redis() -> RedisClient:
-    """Return Redis client instance."""
-    return RedisClient()
+    """Return shared Redis singleton."""
+    return redis_client
