@@ -1,72 +1,73 @@
-from pydantic import BaseModel, validator
+from enum import Enum
 from typing import Optional
-from datetime import datetime
-from app.db.models.task import TaskStatus, TaskPriority
+from pydantic import BaseModel, field_validator, constr
 
+class TaskStatus(str, Enum):
+    todo = "todo"
+    in_progress = "in_progress"
+    done = "done"
+    archived = "archived"
+
+class TaskPriority(str, Enum):
+    low = "low"
+    medium = "medium"
+    high = "high"
+    urgent = "urgent"
+
+def _normalize_enum_value(v: str) -> str:
+    if v is None:
+        return v
+    s = str(v).strip().lower().replace("-", "_")
+    aliases = {"inprogress": "in_progress", "in progress": "in_progress"}
+    return aliases.get(s, s)
 
 class TaskBase(BaseModel):
-    """Base schema for tasks."""
-    title: str
+    title: constr(min_length=1, max_length=200)
     description: Optional[str] = None
-    status: TaskStatus = TaskStatus.TODO
-    priority: TaskPriority = TaskPriority.MEDIUM
-    due_date: Optional[datetime] = None
-    category_id: Optional[int] = None
+    status: TaskStatus = TaskStatus.todo
+    priority: TaskPriority = TaskPriority.medium
 
-    @validator('title')
-    def validate_title(cls, v: str) -> str:
-        v = v.strip()
-        if not v:
-            raise ValueError('Task title cannot be empty')
-        if len(v) > 200:
-            raise ValueError('Task title cannot exceed 200 characters')
-        return v
+    @field_validator("status", mode="before")
+    @classmethod
+    def _status_any_case(cls, v):
+        if isinstance(v, TaskStatus) or v is None:
+            return v
+        return _normalize_enum_value(v)
 
-    @validator('description')
-    def validate_description(cls, v: Optional[str]) -> Optional[str]:
-        if v and len(v) > 1000:
-            raise ValueError('Task description cannot exceed 1000 characters')
-        return v
-
+    @field_validator("priority", mode="before")
+    @classmethod
+    def _priority_any_case(cls, v):
+        if isinstance(v, TaskPriority) or v is None:
+            return v
+        return _normalize_enum_value(v)
 
 class TaskCreate(TaskBase):
-    """Schema for creating a task."""
-    pass
-
+    due_date: Optional[str] = None
 
 class TaskUpdate(BaseModel):
-    """Schema for updating a task."""
-    title: Optional[str] = None
+    title: Optional[constr(min_length=1, max_length=200)] = None
     description: Optional[str] = None
     status: Optional[TaskStatus] = None
     priority: Optional[TaskPriority] = None
-    due_date: Optional[datetime] = None
-    category_id: Optional[int] = None
+    due_date: Optional[str] = None
 
-    @validator('title')
-    def validate_title(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None:
-            v = v.strip()
-            if not v:
-                raise ValueError('Task title cannot be empty')
-            if len(v) > 200:
-                raise ValueError('Task title cannot exceed 200 characters')
-        return v
+    @field_validator("status", mode="before")
+    @classmethod
+    def _status_any_case_u(cls, v):
+        if isinstance(v, TaskStatus) or v is None:
+            return v
+        return _normalize_enum_value(v)
 
-    @validator('description')
-    def validate_description(cls, v: Optional[str]) -> Optional[str]:
-        if v is not None and len(v) > 1000:
-            raise ValueError('Task description cannot exceed 1000 characters')
-        return v
-
+    @field_validator("priority", mode="before")
+    @classmethod
+    def _priority_any_case_u(cls, v):
+        if isinstance(v, TaskPriority) or v is None:
+            return v
+        return _normalize_enum_value(v)
 
 class TaskResponse(TaskBase):
-    """Schema for task response with metadata."""
     id: int
     owner_id: int
-    created_at: datetime
-    updated_at: datetime
-    is_overdue: bool
-
+    category_id: Optional[int] = None
     class Config:
         from_attributes = True
