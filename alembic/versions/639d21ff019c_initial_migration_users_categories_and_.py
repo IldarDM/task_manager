@@ -9,7 +9,6 @@ from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql as pg
 
-# Идентификаторы ревизии
 revision: str = "639d21ff019c"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
@@ -17,15 +16,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # 0) На всякий случай сносим «висячие» типы (это initial; безопасно)
     op.execute("DROP TYPE IF EXISTS taskstatus CASCADE;")
     op.execute("DROP TYPE IF EXISTS taskpriority CASCADE;")
 
-    # 1) Создаём типы заново c корректными значениями (LOWER_CASE)
     op.execute("CREATE TYPE taskstatus AS ENUM ('todo','in_progress','done','archived');")
     op.execute("CREATE TYPE taskpriority AS ENUM ('low','medium','high','urgent');")
 
-    # 2) Таблица users
     op.create_table(
         "users",
         sa.Column("email", sa.String(length=255), nullable=False),
@@ -42,7 +38,6 @@ def upgrade() -> None:
     op.create_index(op.f("ix_users_id"), "users", ["id"])
     op.create_index(op.f("ix_users_email"), "users", ["email"], unique=True)
 
-    # 3) Таблица categories
     op.create_table(
         "categories",
         sa.Column("name", sa.String(length=100), nullable=False),
@@ -57,8 +52,6 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_categories_id"), "categories", ["id"])
 
-    # 4) Таблица tasks
-    #    ВАЖНО: используем pg.ENUM c name=..., create_type=False — это ССЫЛКА на существующий тип.
     status_enum = pg.ENUM(name="taskstatus", create_type=False)
     priority_enum = pg.ENUM(name="taskpriority", create_type=False)
 
@@ -91,6 +84,5 @@ def downgrade() -> None:
     op.drop_index(op.f("ix_users_id"), table_name="users")
     op.drop_table("users")
 
-    # Чистим типы
     op.execute("DROP TYPE IF EXISTS taskstatus;")
     op.execute("DROP TYPE IF EXISTS taskpriority;")
