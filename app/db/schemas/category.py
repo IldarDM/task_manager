@@ -1,7 +1,8 @@
+import re
+
 from pydantic import BaseModel, validator
 from typing import Optional
 from datetime import datetime
-import re
 
 
 class CategoryBase(BaseModel):
@@ -61,6 +62,13 @@ class CategoryResponse(CategoryBase):
     task_count: int
     created_at: datetime
     updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class CategoryShort(BaseModel):
+    id: int
+    name: str
 
     class Config:
         from_attributes = True

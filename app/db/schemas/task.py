@@ -3,6 +3,9 @@ from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel, constr
 
+from app.db.schemas.category import CategoryShort
+
+
 class TaskStatus(str, Enum):
     todo = "todo"
     in_progress = "in_progress"
@@ -18,7 +21,6 @@ class TaskPriority(str, Enum):
 class TaskBase(BaseModel):
     title: constr(min_length=1, max_length=200)
     description: Optional[str] = None
-    # Не задаём дефолты тут — отдаём это БД через server_default
     status: Optional[TaskStatus] = None
     priority: Optional[TaskPriority] = None
 
@@ -37,7 +39,7 @@ class TaskUpdate(BaseModel):
 class TaskResponse(TaskBase):
     id: int
     owner_id: int
-    category_id: Optional[int] = None
+    category: Optional[CategoryShort] = None
     due_date: Optional[datetime] = None
 
     class Config:
